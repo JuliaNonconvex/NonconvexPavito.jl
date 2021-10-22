@@ -16,7 +16,7 @@ Pavito = "cd433a01-47d1-575d-afb7-6db927ee8d8f"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-Cbc = "0.8"
+Cbc = "0.8, 0.9"
 Ipopt = "0.6, 0.7"
 JuMP = "0.21"
 MathOptInterface = "0.9"
