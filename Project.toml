@@ -1,7 +1,7 @@
 name = "NonconvexPavito"
 uuid = "75d5b151-dcdf-4236-8ef5-9c4e63ef33e2"
 authors = ["Mohamed Tarek <mohamed82008@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -16,10 +16,10 @@ Pavito = "cd433a01-47d1-575d-afb7-6db927ee8d8f"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-Cbc = "0.9"
-Ipopt = "0.9"
-JuMP = "0.22"
-MathOptInterface = "0.10"
+Cbc = "0.9, 1"
+Ipopt = "0.9, 1"
+JuMP = "0.22, 0.23"
+MathOptInterface = "0.10, 1"
 NonconvexCore = "1"
 NonconvexIpopt = "0.1.2"
 Parameters = "0.12"
