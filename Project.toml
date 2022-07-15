@@ -1,7 +1,7 @@
 name = "NonconvexPavito"
 uuid = "75d5b151-dcdf-4236-8ef5-9c4e63ef33e2"
 authors = ["Mohamed Tarek <mohamed82008@gmail.com> and contributors"]
-version = "0.1.4"
+version = "0.1.5"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
