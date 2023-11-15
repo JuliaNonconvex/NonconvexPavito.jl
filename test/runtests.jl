@@ -1,7 +1,7 @@
 using NonconvexPavito, LinearAlgebra, Test
 
 f(x::AbstractVector) = sqrt(x[2])
-g(x::AbstractVector, a, b) = (a*x[1] + b)^3 - x[2]
+g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
 
 @testset "First order - $first_order" for first_order in [true, false]
     options = PavitoIpoptCbcOptions(first_order = first_order)
