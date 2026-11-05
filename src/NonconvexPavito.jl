@@ -16,13 +16,18 @@ import NonconvexCore: optimize!, Workspace
     first_order::Bool
 end
 function PavitoIpoptCbcOptions(;
-    first_order = true,
-    subsolver_options = IpoptOptions(first_order = first_order),
+    first_order = nothing,
+    subsolver_options = IpoptOptions(first_order = first_order === nothing ? true : first_order),
     kwargs...,
 )
+    # Only derive first_order from the subsolver options when it was not given
+    # explicitly; an explicit first_order now always wins over a conflicting
+    # hessian_approximation in subsolver_options.
     first_order =
-        !hasproperty(subsolver_options.nt, :hessian_approximation) ||
-        subsolver_options.nt.hessian_approximation == "limited-memory"
+        first_order === nothing ?
+        (!hasproperty(subsolver_options.nt, :hessian_approximation) ||
+         subsolver_options.nt.hessian_approximation == "limited-memory") :
+        first_order
     return PavitoIpoptCbcOptions((; kwargs...), subsolver_options, first_order)
 end
 
@@ -80,7 +85,7 @@ function optimize!(workspace::PavitoIpoptCbcWorkspace)
     counter[] = 0
     jump_problem = workspace.problem
     jump_model = jump_problem.model
-    moi_model = jump_model.moi_backend
+    moi_model = JuMP.backend(jump_model)
     MOI.set.(Ref(moi_model), Ref(MOI.VariablePrimalStart()), workspace.problem.vars, x0)
     MOI.optimize!(moi_model)
     minimizer = MOI.get(moi_model, MOI.VariablePrimal(), jump_problem.vars)
