@@ -58,3 +58,19 @@ g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
         @test r2.minimizer[2] - round(Int, r2.minimizer[2]) ≈ 0 atol = 1e-7
     end
 end
+
+@testset "first_order precedence" begin
+    # Regression test: an explicit first_order used to be overridden by a
+    # conflicting hessian_approximation in subsolver_options.
+    o = PavitoIpoptCbcOptions(
+        first_order = true,
+        subsolver_options = IpoptOptions(first_order = false),
+    )
+    @test o.first_order == true
+    # Without an explicit first_order, the fallback derives it from the
+    # subsolver options.
+    o = PavitoIpoptCbcOptions(
+        subsolver_options = IpoptOptions(first_order = false),
+    )
+    @test o.first_order == false
+end
