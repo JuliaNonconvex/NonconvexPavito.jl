@@ -74,3 +74,13 @@ end
     )
     @test o.first_order == false
 end
+
+@testset "solver capabilities" begin
+    caps = solver_capabilities(PavitoIpoptCbcAlg())
+    @test caps isa ConstraintCapabilities
+    @test caps.eq === true
+    @test caps.ineq === true
+    @test caps.sd === false
+    @test caps.box === true
+    @test caps.integer === true
+end

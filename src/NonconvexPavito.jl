@@ -103,6 +103,14 @@ end
 
 struct PavitoIpoptCbcAlg <: AbstractOptimizer end
 
+NonconvexCore.solver_capabilities(::PavitoIpoptCbcAlg) = ConstraintCapabilities(
+    eq = true,
+    ineq = true,
+    sd = false,
+    box = true,
+    integer = true,
+)
+
 function Workspace(model::VecModel, optimizer::PavitoIpoptCbcAlg, args...; kwargs...)
     return PavitoIpoptCbcWorkspace(model, args...; kwargs...)
 end
