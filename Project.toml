@@ -1,7 +1,7 @@
 name = "NonconvexPavito"
 uuid = "75d5b151-dcdf-4236-8ef5-9c4e63ef33e2"
 authors = ["Mohamed Tarek <mohdibntarek@gmail.com> and contributors"]
-version = "0.1.8"
+version = "0.1.9"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -22,7 +22,7 @@ JuMP = "0.23, 1"
 LinearAlgebra = "1"
 MathOptInterface = "1"
 NonconvexCore = "1.5"
-NonconvexIpopt = "0.5, 0.6"
+NonconvexIpopt = "0.5, 0.6, 0.7"
 Parameters = "0.12, 0.13"
 Pavito = "0.3"
 Reexport = "1"
