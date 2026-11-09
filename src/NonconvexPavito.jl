@@ -2,7 +2,11 @@ module NonconvexPavito
 
 export PavitoIpoptCbcAlg, PavitoIpoptCbcOptions
 
-import Pavito, Cbc, JuMP, MathOptInterface, Ipopt
+using Pavito: Pavito
+using Cbc: Cbc
+using JuMP: JuMP
+using MathOptInterface: MathOptInterface
+using Ipopt: Ipopt
 const MOI = MathOptInterface
 using Reexport, Parameters
 @reexport using NonconvexCore, NonconvexIpopt
@@ -16,18 +20,23 @@ import NonconvexCore: optimize!, Workspace
     first_order::Bool
 end
 function PavitoIpoptCbcOptions(;
-    first_order = nothing,
-    subsolver_options = IpoptOptions(first_order = first_order === nothing ? true : first_order),
+    first_order=nothing,
+    subsolver_options=IpoptOptions(;
+        first_order=first_order === nothing ? true : first_order
+    ),
     kwargs...,
 )
     # Only derive first_order from the subsolver options when it was not given
     # explicitly; an explicit first_order now always wins over a conflicting
     # hessian_approximation in subsolver_options.
-    first_order =
-        first_order === nothing ?
-        (!hasproperty(subsolver_options.nt, :hessian_approximation) ||
-         subsolver_options.nt.hessian_approximation == "limited-memory") :
+    first_order = if first_order === nothing
+        (
+        !hasproperty(subsolver_options.nt, :hessian_approximation) ||
+        subsolver_options.nt.hessian_approximation == "limited-memory"
+    )
+    else
         first_order
+    end
     return PavitoIpoptCbcOptions((; kwargs...), subsolver_options, first_order)
 end
 
@@ -41,8 +50,8 @@ end
 end
 function PavitoIpoptCbcWorkspace(
     model::VecModel,
-    x0::AbstractVector = getinit(model);
-    options = PavitoIpoptCbcOptions(),
+    x0::AbstractVector=getinit(model);
+    options=PavitoIpoptCbcOptions(),
     kwargs...,
 )
     integers = model.integer
@@ -50,12 +59,12 @@ function PavitoIpoptCbcWorkspace(
     nt1 = options.subsolver_options.nt
     ks = setdiff(keys(nt1), (:symbolic, :sparse))
     subsolver_options = map(ks) do k
-        string(k) => nt1[k]
+        return string(k) => nt1[k]
     end
     nl_solver = JuMP.optimizer_with_attributes(Ipopt.Optimizer, Dict(subsolver_options)...)
     nt2 = options.nt
     solver_options = map(keys(nt2)) do k
-        string(k) => nt2[k]
+        return string(k) => nt2[k]
     end
     optimizer = JuMP.optimizer_with_attributes(
         Pavito.Optimizer,
@@ -66,9 +75,9 @@ function PavitoIpoptCbcWorkspace(
     problem, counter = get_jump_problem(
         model,
         copy(x0);
-        first_order = options.first_order,
-        optimizer = optimizer,
-        integers = integers,
+        first_order=options.first_order,
+        optimizer=optimizer,
+        integers=integers,
     )
     return PavitoIpoptCbcWorkspace(model, problem, copy(x0), integers, options, counter)
 end
@@ -93,11 +102,7 @@ function optimize!(workspace::PavitoIpoptCbcWorkspace)
     term_status = MOI.get(moi_model, MOI.TerminationStatus())
     primal_status = MOI.get(moi_model, MOI.PrimalStatus())
     return PavitoIpoptCbcResult(
-        minimizer,
-        objval,
-        problem,
-        (term_status, primal_status),
-        counter[],
+        minimizer, objval, problem, (term_status, primal_status), counter[]
     )
 end
 
