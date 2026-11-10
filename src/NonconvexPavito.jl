@@ -26,6 +26,21 @@ function PavitoIpoptCbcOptions(;
     ),
     kwargs...,
 )
+    return _pavito_ipopt_cbc_options((; first_order, subsolver_options, kwargs...))
+end
+# A positional-NamedTuple path: JET (on Julia 1.13) cannot resolve
+# `Core.kwcall` on `Base.Pairs` forwarding during its virtual top-level
+# replay, so forwarded options go through this positional method.
+function PavitoIpoptCbcOptions(nt::NamedTuple)
+    return _pavito_ipopt_cbc_options(nt)
+end
+function _pavito_ipopt_cbc_options(nt::NamedTuple)
+    first_order = get(nt, :first_order, nothing)
+    subsolver_options = get(
+        nt,
+        :subsolver_options,
+        IpoptOptions(; first_order=first_order === nothing ? true : first_order),
+    )
     # Only derive first_order from the subsolver options when it was not given
     # explicitly; an explicit first_order now always wins over a conflicting
     # hessian_approximation in subsolver_options.
@@ -37,7 +52,9 @@ function PavitoIpoptCbcOptions(;
     else
         first_order
     end
-    return PavitoIpoptCbcOptions((; kwargs...), subsolver_options, first_order)
+    known = (:first_order, :subsolver_options)
+    rest = [k for k in keys(nt) if k ∉ known]
+    return PavitoIpoptCbcOptions(nt[Tuple(rest)], subsolver_options, first_order)
 end
 
 @params mutable struct PavitoIpoptCbcWorkspace <: Workspace
@@ -50,36 +67,54 @@ end
 end
 function PavitoIpoptCbcWorkspace(
     model::VecModel,
-    x0::AbstractVector=getinit(model);
+    x0::AbstractVector=NonconvexCore.getinit(model);
     options=PavitoIpoptCbcOptions(),
     kwargs...,
+)
+    return _pavito_ipopt_cbc_workspace(model, x0, options)
+end
+# A positional-NamedTuple path: JET (on Julia 1.13) cannot resolve
+# `Core.kwcall` on `Base.Pairs` forwarding during its virtual top-level
+# replay, so forwarded options go through this positional method.
+function PavitoIpoptCbcWorkspace(model::VecModel, x0::AbstractVector, nt::NamedTuple)
+    options = haskey(nt, :options) ? nt[:options] : PavitoIpoptCbcOptions((;))
+    return _pavito_ipopt_cbc_workspace(model, x0, options)
+end
+function _pavito_ipopt_cbc_workspace(
+    model::VecModel, x0::AbstractVector, options::PavitoIpoptCbcOptions
 )
     integers = model.integer
     @assert length(integers) == length(x0)
     nt1 = options.subsolver_options.nt
     ks = setdiff(keys(nt1), (:symbolic, :sparse))
-    subsolver_options = map(ks) do k
-        return string(k) => nt1[k]
-    end
-    nl_solver = JuMP.optimizer_with_attributes(Ipopt.Optimizer, Dict(subsolver_options)...)
+    subsolver_options = Dict{String,Any}(string(k) => nt1[k] for k in ks)
+    nl_solver = JuMP.optimizer_with_attributes(Ipopt.Optimizer, subsolver_options...)
     nt2 = options.nt
-    solver_options = map(keys(nt2)) do k
-        return string(k) => nt2[k]
-    end
+    solver_options = Dict{String,Any}(string(k) => nt2[k] for k in keys(nt2))
     optimizer = JuMP.optimizer_with_attributes(
         Pavito.Optimizer,
         "cont_solver" => nl_solver,
-        Dict(solver_options)...,
+        solver_options...,
         "mip_solver" => JuMP.optimizer_with_attributes(Cbc.Optimizer),
     )
-    problem, counter = get_jump_problem(
-        model,
-        copy(x0);
-        first_order=options.first_order,
-        optimizer=optimizer,
-        integers=integers,
+    objective = NonconvexCore.getobjective(model)
+    objective === nothing && throw(ArgumentError("The model has no objective."))
+    ineq = isempty(model.ineq_constraints.fs) ? nothing : model.ineq_constraints
+    eq = isempty(model.eq_constraints.fs) ? nothing : model.eq_constraints
+    obj = NonconvexCore.CountingFunction(objective)
+    problem = NonconvexCore.get_jump_problem(
+        obj,
+        ineq,
+        eq,
+        copy(x0),
+        integers,
+        NonconvexCore.getmin(model),
+        NonconvexCore.getmax(model),
+        options.first_order,
+        optimizer,
+        NonconvexCore.DEFAULT_AD_BACKEND[],
     )
-    return PavitoIpoptCbcWorkspace(model, problem, copy(x0), integers, options, counter)
+    return PavitoIpoptCbcWorkspace(model, problem, copy(x0), integers, options, obj.counter)
 end
 @params struct PavitoIpoptCbcResult <: AbstractResult
     minimizer::Any
@@ -124,8 +159,15 @@ function NonconvexCore.solver_capabilities(::PavitoIpoptCbcAlg)
     )
 end
 
-function Workspace(model::VecModel, optimizer::PavitoIpoptCbcAlg, args...; kwargs...)
-    return PavitoIpoptCbcWorkspace(model, args...; kwargs...)
+function Workspace(
+    model::VecModel, optimizer::PavitoIpoptCbcAlg, x0::AbstractVector; kwargs...
+)
+    return PavitoIpoptCbcWorkspace(model, x0, (; kwargs...))
+end
+
+# Without an explicit start point, default to the model's initial values.
+function Workspace(model::VecModel, optimizer::PavitoIpoptCbcAlg; kwargs...)
+    return PavitoIpoptCbcWorkspace(model, NonconvexCore.getinit(model), (; kwargs...))
 end
 
 end
