@@ -1,0 +1,11 @@
+name = "Pavito"
+modules = ["NonconvexPavito"]
+doctest_setup = "using NonconvexPavito"
+
+[[pages]]
+title = "Pavito"
+file = "index.md"
+
+[[pages]]
+title = "Docstrings"
+file = "docstrings.md"

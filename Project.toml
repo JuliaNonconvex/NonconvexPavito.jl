@@ -1,7 +1,7 @@
 name = "NonconvexPavito"
 uuid = "75d5b151-dcdf-4236-8ef5-9c4e63ef33e2"
 authors = ["Mohamed Tarek <mohdibntarek@gmail.com> and contributors"]
-version = "0.1.9"
+version = "0.3.0"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -16,20 +16,25 @@ Pavito = "cd433a01-47d1-575d-afb7-6db927ee8d8f"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
+Test = "1"
 Cbc = "0.9, 1"
 Ipopt = "1"
 JuMP = "0.23, 1"
 LinearAlgebra = "1"
 MathOptInterface = "1"
-NonconvexCore = "1.5"
-NonconvexIpopt = "0.5, 0.6, 0.7"
+NonconvexCore = "2"
+NonconvexIpopt = "0.5, 0.6, 0.7, 0.8"
 Parameters = "0.12, 0.13"
 Pavito = "0.3"
 Reexport = "1"
+TestItemRunner = "0.1, 0.2, 1"
+TestItems = "0.1, 1"
 julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
+TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 
 [targets]
-test = ["Test"]
+test = ["Test", "TestItemRunner", "TestItems"]
