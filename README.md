@@ -16,7 +16,7 @@ Mixed-integer nonlinear programming with Pavito.jl
 
 Outer approximation MINLP with Ipopt and Cbc as the sub-solvers.
 
-NonconvexPavito.jl is part of the [JuliaNonconvex](https://github.com/JuliaNonconvex) ecosystem built on [NonconvexCore.jl](https://github.com/JuliaNonconvex/NonconvexCore.jl).
+NonconvexPavito.jl is part of the [JuliaNonconvex](https://github.com/JuliaNonconvex) ecosystem built on [NonconvexCore.jl](https://github.com/JuliaNonconvex/NonconvexCore.jl) under the [Nonconvex.jl](https://github.com/JuliaNonconvex/Nonconvex.jl) umbrella.
 
 ## Quick start
 
