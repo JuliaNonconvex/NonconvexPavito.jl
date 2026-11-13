@@ -107,7 +107,8 @@ end
     # The default MIP sub-solver is Cbc.
     w = Workspace(vm, PavitoIpoptCbcAlg(), x0)
     opt = JuMP.unsafe_backend(w.problem.model)
-    @test MOI.get(opt, MOI.RawOptimizerAttribute("mip_solver")) isa MOI.OptimizerWithAttributes
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("mip_solver")) isa
+        MOI.OptimizerWithAttributes
 
     # A user-supplied mip_solver must not be overridden by the Cbc default.
     user_mip = JuMP.optimizer_with_attributes(Cbc.Optimizer)
@@ -128,10 +129,10 @@ end
     add_ineq_constraint!(m, x -> g(x, 2, 0))
     vm, x0, _ = NonconvexCore.tovecmodel(m, [1.0, 2.0])
 
-    @test_logs (:warn, r"callback") match_mode=:any Workspace(
+    @test_logs (:warn, r"callback") match_mode = :any Workspace(
         vm, PavitoIpoptCbcAlg(), x0; callback=x -> nothing
     )
-    @test_logs (:warn, r"callback") match_mode=:any Workspace(
+    @test_logs (:warn, r"callback") match_mode = :any Workspace(
         vm, PavitoIpoptCbcAlg(); callback=x -> nothing
     )
 end
@@ -155,6 +156,8 @@ end
     w = Workspace(vm, PavitoIpoptCbcAlg(), x0; first_order=false)
     @test w.options.first_order === false
     # an explicit options argument is still honored, and direct kwargs win
-    w = Workspace(vm, PavitoIpoptCbcAlg(), x0; options=PavitoIpoptCbcOptions(), first_order=false)
+    w = Workspace(
+        vm, PavitoIpoptCbcAlg(), x0; options=PavitoIpoptCbcOptions(), first_order=false
+    )
     @test w.options.first_order === false
 end
