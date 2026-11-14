@@ -20,6 +20,19 @@ function _warn_callback_ignored()
 end
 _warn_callback_ignored(nt::NamedTuple) = haskey(nt, :callback) && _warn_callback_ignored()
 
+"""
+    PavitoIpoptCbcOptions(; first_order=nothing, subsolver_options=IpoptOptions(...), kwargs...)
+
+Options for [`PavitoIpoptCbcAlg`](@ref), passed to `optimize` as
+`options = ...`.
+
+- `first_order`: passed to the Ipopt subsolver (defaults to `true` unless
+  given);
+- `subsolver_options`: an `IpoptOptions` for the nonlinear subsolver;
+- all remaining keyword arguments are forwarded to Pavito.
+
+Note that the `callback` keyword is not supported and will be ignored.
+"""
 @params struct PavitoIpoptCbcOptions
     nt::NamedTuple
     subsolver_options::Any
@@ -182,6 +195,17 @@ function optimize!(workspace::PavitoIpoptCbcWorkspace)
     )
 end
 
+"""
+    PavitoIpoptCbcAlg()
+
+A mixed-integer nonlinear programming (MINLP) solver combining the
+sequential polyhedral outer-approximation algorithm of
+[Pavito.jl](https://github.com/jump-dev/Pavito.jl) with Ipopt as the
+nonlinear subsolver and Cbc as the mixed-integer subsolver, exposed through
+the Nonconvex interface. Supports nonlinear inequality and equality
+constraints, box constraints and integer variables. Options are set through
+[`PavitoIpoptCbcOptions`](@ref).
+"""
 struct PavitoIpoptCbcAlg <: AbstractOptimizer end
 
 function NonconvexCore.solver_capabilities(::PavitoIpoptCbcAlg)
