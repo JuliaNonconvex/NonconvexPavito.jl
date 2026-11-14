@@ -14,6 +14,12 @@ using NonconvexCore: @params, AbstractOptimizer, AbstractResult
 using NonconvexCore: VecModel, JuMPProblem, get_jump_problem
 import NonconvexCore: optimize!, Workspace
 
+function _warn_callback_ignored()
+    @warn "The `callback` keyword is not supported by NonconvexPavito and will be ignored."
+    return nothing
+end
+_warn_callback_ignored(nt::NamedTuple) = haskey(nt, :callback) && _warn_callback_ignored()
+
 @params struct PavitoIpoptCbcOptions
     nt::NamedTuple
     subsolver_options::Any
@@ -71,14 +77,38 @@ function PavitoIpoptCbcWorkspace(
     options=PavitoIpoptCbcOptions(),
     kwargs...,
 )
-    return _pavito_ipopt_cbc_workspace(model, x0, options)
+    haskey(kwargs, :callback) && _warn_callback_ignored()
+    ks = Tuple(k for k in keys(kwargs) if k !== :callback)
+    rest = kwargs[ks]
+    merged = isempty(rest) ? options : _pavito_merge_options(options, rest)
+    return _pavito_ipopt_cbc_workspace(model, x0, merged)
 end
 # A positional-NamedTuple path: JET (on Julia 1.13) cannot resolve
 # `Core.kwcall` on `Base.Pairs` forwarding during its virtual top-level
 # replay, so forwarded options go through this positional method.
 function PavitoIpoptCbcWorkspace(model::VecModel, x0::AbstractVector, nt::NamedTuple)
-    options = haskey(nt, :options) ? nt[:options] : PavitoIpoptCbcOptions((;))
+    _warn_callback_ignored(nt)
+    ks = Tuple(k for k in keys(nt) if k !== :callback)
+    opt_nt = nt[ks]
+    options = if haskey(opt_nt, :options)
+        rest = (; (k => v for (k, v) in pairs(opt_nt) if k !== :options)...)
+        isempty(rest) ? opt_nt[:options] : _pavito_merge_options(opt_nt[:options], rest)
+    else
+        # Forward remaining keyword arguments (e.g. `mip_solver`) to the
+        # options constructor; `callback` is handled above.
+        PavitoIpoptCbcOptions(opt_nt)
+    end
     return _pavito_ipopt_cbc_workspace(model, x0, options)
+end
+# Direct keyword arguments take precedence over an explicitly passed
+# `options` object.
+function _pavito_merge_options(options::PavitoIpoptCbcOptions, rest::NamedTuple)
+    base = (;
+        options.nt...,
+        first_order=options.first_order,
+        subsolver_options=options.subsolver_options,
+    )
+    return PavitoIpoptCbcOptions(; base..., rest...)
 end
 function _pavito_ipopt_cbc_workspace(
     model::VecModel, x0::AbstractVector, options::PavitoIpoptCbcOptions
@@ -91,11 +121,22 @@ function _pavito_ipopt_cbc_workspace(
     nl_solver = JuMP.optimizer_with_attributes(Ipopt.Optimizer, subsolver_options...)
     nt2 = options.nt
     solver_options = Dict{String,Any}(string(k) => nt2[k] for k in keys(nt2))
+    # A user-supplied `mip_solver` option takes precedence over the default
+    # Cbc sub-solver. `JuMP.optimizer_with_attributes` is idempotent for
+    # `MOI.OptimizerWithAttributes` and wraps plain optimizer constructors.
+    mip_solver = pop!(solver_options, "mip_solver", nothing)
+    mip_solver = if mip_solver === nothing
+        JuMP.optimizer_with_attributes(Cbc.Optimizer)
+    elseif mip_solver isa MOI.OptimizerWithAttributes
+        mip_solver
+    else
+        JuMP.optimizer_with_attributes(mip_solver)
+    end
     optimizer = JuMP.optimizer_with_attributes(
         Pavito.Optimizer,
         "cont_solver" => nl_solver,
         solver_options...,
-        "mip_solver" => JuMP.optimizer_with_attributes(Cbc.Optimizer),
+        "mip_solver" => mip_solver,
     )
     objective = NonconvexCore.getobjective(model)
     objective === nothing && throw(ArgumentError("The model has no objective."))

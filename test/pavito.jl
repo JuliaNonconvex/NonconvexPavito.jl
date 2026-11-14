@@ -90,3 +90,74 @@ end
     @test caps.box === true
     @test caps.integer === true
 end
+
+@testitem "user mip_solver takes precedence" begin
+    using NonconvexPavito, Test
+    import Cbc, JuMP, MathOptInterface, NonconvexCore
+    const MOI = MathOptInterface
+
+    f(x::AbstractVector) = sum(x .^ 2)
+    g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
+
+    m = Model(f)
+    addvar!(m, [0.0, 0.0], [10.0, 10.0])
+    add_ineq_constraint!(m, x -> g(x, 2, 0))
+    vm, x0, _ = NonconvexCore.tovecmodel(m, [1.0, 2.0])
+
+    # The default MIP sub-solver is Cbc.
+    w = Workspace(vm, PavitoIpoptCbcAlg(), x0)
+    opt = JuMP.unsafe_backend(w.problem.model)
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("mip_solver")) isa
+        MOI.OptimizerWithAttributes
+
+    # A user-supplied mip_solver must not be overridden by the Cbc default.
+    user_mip = JuMP.optimizer_with_attributes(Cbc.Optimizer)
+    w = Workspace(vm, PavitoIpoptCbcAlg(), x0; mip_solver=user_mip)
+    opt = JuMP.unsafe_backend(w.problem.model)
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("mip_solver")) === user_mip
+end
+
+@testitem "callback kwarg is not silently dropped" begin
+    using NonconvexPavito, Test
+    import NonconvexCore
+
+    f(x::AbstractVector) = sum(x .^ 2)
+    g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
+
+    m = Model(f)
+    addvar!(m, [0.0, 0.0], [10.0, 10.0])
+    add_ineq_constraint!(m, x -> g(x, 2, 0))
+    vm, x0, _ = NonconvexCore.tovecmodel(m, [1.0, 2.0])
+
+    @test_logs (:warn, r"callback") match_mode = :any Workspace(
+        vm, PavitoIpoptCbcAlg(), x0; callback=x -> nothing
+    )
+    @test_logs (:warn, r"callback") match_mode = :any Workspace(
+        vm, PavitoIpoptCbcAlg(); callback=x -> nothing
+    )
+end
+
+@testitem "direct option kwargs populate the options" begin
+    using NonconvexPavito, Test
+    import NonconvexCore
+
+    f(x::AbstractVector) = sum(x .^ 2)
+    g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
+
+    m = Model(f)
+    addvar!(m, [0.0, 0.0], [10.0, 10.0])
+    add_ineq_constraint!(m, x -> g(x, 2, 0))
+    vm, x0, _ = NonconvexCore.tovecmodel(m, [1.0, 2.0])
+
+    # default options are first-order
+    w = Workspace(vm, PavitoIpoptCbcAlg(), x0)
+    @test w.options.first_order === true
+    # a direct kwarg reaches the options instead of being dropped
+    w = Workspace(vm, PavitoIpoptCbcAlg(), x0; first_order=false)
+    @test w.options.first_order === false
+    # an explicit options argument is still honored, and direct kwargs win
+    w = Workspace(
+        vm, PavitoIpoptCbcAlg(), x0; options=PavitoIpoptCbcOptions(), first_order=false
+    )
+    @test w.options.first_order === false
+end
