@@ -203,12 +203,15 @@ end
 function Workspace(
     model::VecModel, optimizer::PavitoIpoptCbcAlg, x0::AbstractVector; kwargs...
 )
-    return PavitoIpoptCbcWorkspace(model, x0, (; kwargs...))
+    nt = (; kwargs...)
+    return PavitoIpoptCbcWorkspace(model, x0, nt)
 end
 
 # Without an explicit start point, default to the model's initial values.
+# Route through the x0-annotated method (like the Ipopt wrapper) so JET can
+# resolve the `getinit(model)::Any` argument against `x0::AbstractVector`.
 function Workspace(model::VecModel, optimizer::PavitoIpoptCbcAlg; kwargs...)
-    return PavitoIpoptCbcWorkspace(model, NonconvexCore.getinit(model), (; kwargs...))
+    return Workspace(model, optimizer, NonconvexCore.getinit(model); kwargs...)
 end
 
 end
