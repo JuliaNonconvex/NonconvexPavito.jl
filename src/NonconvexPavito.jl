@@ -20,19 +20,6 @@ function _warn_callback_ignored()
 end
 _warn_callback_ignored(nt::NamedTuple) = haskey(nt, :callback) && _warn_callback_ignored()
 
-"""
-    PavitoIpoptCbcOptions(; first_order=nothing, subsolver_options=IpoptOptions(...), kwargs...)
-
-Options for [`PavitoIpoptCbcAlg`](@ref), passed to `optimize` as
-`options = ...`.
-
-- `first_order`: passed to the Ipopt subsolver (defaults to `true` unless
-  given);
-- `subsolver_options`: an `IpoptOptions` for the nonlinear subsolver;
-- all remaining keyword arguments are forwarded to Pavito.
-
-Note that the `callback` keyword is not supported and will be ignored.
-"""
 @params struct PavitoIpoptCbcOptions
     nt::NamedTuple
     subsolver_options::Any
@@ -195,17 +182,6 @@ function optimize!(workspace::PavitoIpoptCbcWorkspace)
     )
 end
 
-"""
-    PavitoIpoptCbcAlg()
-
-A mixed-integer nonlinear programming (MINLP) solver combining the
-sequential polyhedral outer-approximation algorithm of
-[Pavito.jl](https://github.com/jump-dev/Pavito.jl) with Ipopt as the
-nonlinear subsolver and Cbc as the mixed-integer subsolver, exposed through
-the Nonconvex interface. Supports nonlinear inequality and equality
-constraints, box constraints and integer variables. Options are set through
-[`PavitoIpoptCbcOptions`](@ref).
-"""
 struct PavitoIpoptCbcAlg <: AbstractOptimizer end
 
 function NonconvexCore.solver_capabilities(::PavitoIpoptCbcAlg)
@@ -227,12 +203,15 @@ end
 function Workspace(
     model::VecModel, optimizer::PavitoIpoptCbcAlg, x0::AbstractVector; kwargs...
 )
-    return PavitoIpoptCbcWorkspace(model, x0, (; kwargs...))
+    nt = (; kwargs...)
+    return PavitoIpoptCbcWorkspace(model, x0, nt)
 end
 
 # Without an explicit start point, default to the model's initial values.
+# Route through the x0-annotated method (like the Ipopt wrapper) so JET can
+# resolve the `getinit(model)::Any` argument against `x0::AbstractVector`.
 function Workspace(model::VecModel, optimizer::PavitoIpoptCbcAlg; kwargs...)
-    return PavitoIpoptCbcWorkspace(model, NonconvexCore.getinit(model), (; kwargs...))
+    return Workspace(model, optimizer, NonconvexCore.getinit(model); kwargs...)
 end
 
 end
