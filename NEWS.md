@@ -1,5 +1,10 @@
 # NEWS
 
+## 0.2.3
+
+- Infeasible terminations without an incumbent return a NaN-filled
+  result instead of throwing an opaque MOI exception.
+
 ## 0.2.2
 
 - Respect the user `mip_solver` and harden the options handling; scheduled
