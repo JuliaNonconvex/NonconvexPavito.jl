@@ -1,5 +1,10 @@
 # NEWS
 
+## 0.2.4
+
+- Added docstrings for `PavitoIpoptCbcAlg` and `PavitoIpoptCbcOptions` (REPL help and API reference).
+
+
 ## 0.2.3
 
 - Infeasible terminations without an incumbent return a NaN-filled
