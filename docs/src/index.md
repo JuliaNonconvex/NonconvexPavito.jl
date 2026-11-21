@@ -1,4 +1,4 @@
-# Mixed integer nonlinear programming using Pavito, Ipopt and Cbc
+# NonconvexPavito
 
 ![JuliaNonconvex logo](https://raw.githubusercontent.com/JuliaNonconvex/NonconvexPavito.jl/master/docs/src/assets/logo.png)
 
