@@ -93,7 +93,10 @@ end
 
 @testitem "user mip_solver takes precedence" begin
     using NonconvexPavito, Test
-    import Cbc, JuMP, MathOptInterface, NonconvexCore
+    using Cbc: Cbc
+    using JuMP: JuMP
+    using MathOptInterface: MathOptInterface
+    using NonconvexCore: NonconvexCore
     const MOI = MathOptInterface
 
     f(x::AbstractVector) = sum(x .^ 2)
@@ -119,7 +122,7 @@ end
 
 @testitem "callback kwarg is not silently dropped" begin
     using NonconvexPavito, Test
-    import NonconvexCore
+    using NonconvexCore: NonconvexCore
 
     f(x::AbstractVector) = sum(x .^ 2)
     g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
@@ -139,7 +142,7 @@ end
 
 @testitem "direct option kwargs populate the options" begin
     using NonconvexPavito, Test
-    import NonconvexCore
+    using NonconvexCore: NonconvexCore
 
     f(x::AbstractVector) = sum(x .^ 2)
     g(x::AbstractVector, a, b) = (a * x[1] + b)^3 - x[2]
