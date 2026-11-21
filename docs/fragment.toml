@@ -1,4 +1,4 @@
-name = "Pavito"
+name = "NonconvexPavito"
 modules = ["NonconvexPavito"]
 doctest_setup = "using NonconvexPavito"
 
