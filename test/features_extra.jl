@@ -100,8 +100,8 @@ end
 
 @testitem "mip sub-solver is Cbc" begin
     using NonconvexPavito, NonconvexCore, Test
-    import JuMP
-    import Cbc
+    using JuMP: JuMP
+    using Cbc: Cbc
     import MathOptInterface as MOI
 
     m = Model(x -> sum(abs2, x))

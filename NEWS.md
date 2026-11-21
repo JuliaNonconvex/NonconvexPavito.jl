@@ -1,5 +1,8 @@
 # NEWS
 
+## 0.2.5
+
+- Docs: package-name section titles and left-aligned logos (no code changes).
 ## 0.2.4
 
 - Added docstrings for `PavitoIpoptCbcAlg` and `PavitoIpoptCbcOptions` (REPL help and API reference).
