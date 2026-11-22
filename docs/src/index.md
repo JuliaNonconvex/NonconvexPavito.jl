@@ -1,7 +1,5 @@
 # NonconvexPavito
 
-![JuliaNonconvex logo](https://raw.githubusercontent.com/JuliaNonconvex/NonconvexPavito.jl/master/docs/src/assets/logo.png)
-
 ## Description
 
 [Pavito.jl](https://github.com/jump-dev/Pavito.jl) implements the sequential polyhedral outer-approximation algorithm for mixed integer nonlinear programming, with [Ipopt.jl](https://github.com/jump-dev/Ipopt.jl) as the continuous NLP sub-solver and [Cbc.jl](https://github.com/jump-dev/Cbc.jl) as the mixed integer sub-solver. `NonconvexPavito.jl` allows the use of `Pavito.jl` through the `PavitoIpoptCbcAlg` algorithm struct.
